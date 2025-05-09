@@ -1,0 +1,372 @@
+/* General */
+:root {
+    --color-primary: #2e7d32;; /* Verde claro */
+    --color-secondary: #4CAF50; /* Marrón claro */
+    --color-accent: #FFEB3B; /* Naranja claro */
+    --color-light: #f8f9fa; /* Fondo claro */
+    --color-dark: #333; /* Texto oscuro */
+    --color-gray: #f5f5dc; /* Beige claro */
+    --header-height: 60px;
+    --toolbar-height: 50px;
+    --sidebar-width: 300px;
+    --font-base: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: var(--font-base);
+    color: var(--color-dark);
+    background-color: var(--color-light);
+  
+  }
+  
+  /* Header */
+  .header {
+    height: var(--header-height);
+    background-color:  #f5f5dc; /* Cambia a color similar al de dashboard.html */
+    color: var(--color-dark);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+  }
+  
+  .logo {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+  }
+  
+  .logo img {
+    height: 36px;
+    margin-right: 10px;
+  }
+  
+  .nav-links {
+    list-style: none;
+    display: flex;
+  }
+
+  .nav-links ul {
+    list-style: none;
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .nav-links li {
+    margin-left: 1.5rem;
+  }
+
+ 
+  
+  .nav-links a {
+    color: var(--color-dark);
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.2s;
+  }
+  
+  .nav-links a:hover {
+    opacity: 0.8;
+  }
+  
+  .user-controls .btn {
+    background-color: var(--color-accent);
+    color: var(--color-dark);
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  /* Layout Principal */
+  .container {
+    top: calc(var(--header-height) + var(--toolbar-height));
+    height: calc(100vh - var(--header-height) - var(--toolbar-height));
+  }
+  
+  .sidebar-heading {
+    padding: 1rem;
+    font-weight: bold;
+    border-bottom: 1px solid var(--color-gray);
+    background: #f5f5f5;
+  }
+  
+  .parcel-list {
+    padding: 0.5rem;
+  }
+  
+  .parcel-item {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--color-gray);
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .parcel-item:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .parcel-name {
+    font-weight: 500;
+  }
+  
+  /* Botón Toggle Sidebar */
+  .sidebar-toggle {
+    position: absolute;
+    top: calc(var(--header-height) + var(--toolbar-height));
+    top: 0;
+    right: -40px; /* Fuera del sidebar derecho */
+    width: 40px;
+    height: 40px;
+    background-color: white;
+    color: var(--color-primary);
+    border: 1px solid var(--color-gray);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    z-index: 1001; /* Asegura que esté encima del mapa */
+  }
+  
+  .sidebar-toggle.collapsed {
+    transform: translateX(300px); /* Ancho del sidebar derecho */
+  }
+  
+  .sidebar-toggle i {
+    font-size: 1rem;
+  }
+    
+  /* Mapa */
+  .map-container {
+    flex: 1;
+    position: relative;
+    height: 100%; /* Resta altura del header y toolbar */
+  }
+  
+  #map {
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+  }
+  
+  /* Panel Inferior - Edición */
+  .bottom-panel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: white;
+    padding: 1rem;
+    border-top: 1px solid var(--color-gray);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 500;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .bottom-panel.active {
+    transform: translateY(0);
+  }
+  
+  .form-group {
+    display: flex;
+    align-items: center;
+    margin-right: 1rem;
+  }
+  
+  .form-group label {
+    margin-right: 0.5rem;
+    font-weight: 500;
+  }
+  
+  .form-group input,
+  .form-group select {
+    padding: 0.5rem;
+    border: 1px solid var(--color-gray);
+    border-radius: 4px;
+  }
+  
+  /* Sidebar Derecho - Capas */
+  .sidebar-right {
+    position: fixed;
+    top: calc(var(--header-height) + var(--toolbar-height));
+    right: 0;
+    width: var(--sidebar-width);
+    height: calc(100vh - var(--header-height) - var(--toolbar-height));
+    background-color: var(--color-gray);
+    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+    padding: 1rem;
+    overflow-y: auto;
+    transition: right 0.3s ease;
+    z-index: 990;
+  }
+  
+  
+  
+  /* Cuando está colapsado */
+    .sidebar-right.collapsed {
+    right: calc(-1 * var(--sidebar-width));
+  }
+
+  /* Botón de toggle derecho */
+  /* Botón Toggle para el sidebar derecho */
+  #right-toggle {
+    position: fixed;
+    top: calc(var(--header-height) + var(--toolbar-height)); /* Ajusta 20px según tu diseño */
+    right: var(--sidebar-width);
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 4px 0 0 4px;
+    cursor: pointer;
+    z-index: 995;
+    transition: right 0.3s ease;
+  }
+  
+  #right-toggle:hover {
+    background-color: #f0f0f0;
+  }
+  
+  #right-toggle.collapsed {
+    right: 0px; /* Ancho del sidebar */
+    border-radius: 4px 0 0 4px;
+    border-left: 1px solid #ccc;
+    border-right: none;
+  }
+  
+  
+  .coordinates {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    z-index: 400;
+  }
+  
+  /* Controles de Leaflet */
+  #leaflet-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .toolbar-navbar {
+    background-color: var(--color-primary);
+    border-bottom: 1px solid var(--color-gray);
+    display: flex;
+    justify-content: start; /* Botones alineados a la izquierda */
+    align-items: center;
+    padding: 0.5rem 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    z-index: 999;
+    position: absolute;
+    left: 0;
+    margin-top: var(--header-height); /* Deja espacio para el header */
+    gap: 1rem; /* Espacio entre botones */
+    flex-wrap: wrap; /* Para pantallas pequeñas */
+    overflow-x: auto; /* Si hay muchos botones */
+  }
+  
+  .tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0.25rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    color: var(--color-dark);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap; /* Evita saltos de línea innecesarios */
+  }
+  
+  .tool-btn:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .tool-btn i {
+    font-size: 1rem;
+  }
+/* ================
+   Sidebar Izquierdo
+   ================ */
+   .sidebar-left {
+    position: fixed;
+    left: 0;
+    top: calc(var(--header-height) + var(--toolbar-height));
+    bottom: 0;
+    width: var(--sidebar-width);
+    height: calc(100vh - var(--header-height) - var(--toolbar-height));
+    background: white;
+    border-right: 1px solid var(--color-gray);
+    overflow-y: auto;
+    z-index: 999;
+    padding: 1rem;
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar-left.collapsed {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar-left .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .sidebar-left label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+  
+  .sidebar-left input,
+  .sidebar-left select {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid var(--color-gray);
+    border-radius: 4px;
+  }
+  
+  .sidebar-left button.full {
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  #left-toggle {
+    position: fixed;
+    left: var(--sidebar-width);
+    top: calc(var(--header-height) + var(--toolbar-height)); /* Ajusta 20px según tu diseño */
+    background: white;
+    border: 1px solid var(--color-gray);
+    border-left: none;
+    border-radius: 0 4px 4px 0;
+    padding: 8px;
+    cursor: pointer;
+    z-index: 1000;
+    transition: left 0.3s ease;
+  }
+  #left-toggle.collapsed {
+    left: 0;
+  }
+  

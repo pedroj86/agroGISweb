@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Sensor NPK</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Librerías -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js "></script>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet @1.9.4/dist/leaflet.css" />
+
+  <style>
+    /* Estilos generales */
+    body {
+      font-family: var(--font-family);
+      color: var(--text-color);
+      background-color: var(--light-bg);
+      margin: 0;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      flex: 1;
+    }
+
+    /* Tarjetas */
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 1rem;
+      margin: 0.5rem;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .card h3 {
+      color: var(--primary-color);
+      margin-bottom: 1rem;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Grid de tarjetas */
+    .cards-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* Mapa */
+    #map {
+      width: 100%;
+      height: 300px;
+      border-radius: 8px;
+      margin-top: 1.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .cards-container {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body class="hidden">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="logo">
+      <img src="assets/logo.png" alt="Logo Sensor NPK" width="40">
+      <span>Agromul</span>
+    </div>
+    <button class="hamburger" id="hamburger">
+      <i class="fas fa-bars"></i>
+    </button>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="dashboard.html">Inicio</a></li>
+      <li><a href="#">Datos en Tiempo Real</a></li>
+      <li><a href="gis.html">AgroGIS</a></li>
+      <li><a href="#">Configuración</a></li>
+      <li><button class="logout-btn">Cerrar Sesión</button></li>
+    </ul>
+  </nav>
+
+  <!-- Header -->
+  <header class="hero-small">
+    <div class="container">
+      <h1>Bienvenido, <span id="user-name">Usuario</span></h1>
+      <p>Este es tu panel de control para gestionar los datos de tus sensores.</p>
+    </div>
+  </header>
+
+  <!-- Dashboard principal -->
+  <section class="dashboard container">
+    <div class="cards-container">
+      <!-- Tarjeta 1: Humedad -->
+      <div class="card">
+        <h3>Humedad</h3>
+        <canvas id="humidity-gauge"></canvas>
+      </div>
+
+      <!-- Tarjeta 2: Conductividad -->
+      <div class="card">
+        <h3>Conductividad</h3>
+        <canvas id="conductivity-gauge"></canvas>
+      </div>
+
+      <!-- Tarjeta 3: Temperatura Subsuelo -->
+      <div class="card">
+        <h3>Temperatura Subsuelo</h3>
+        <canvas id="subsoil-temp-gauge"></canvas>
+      </div>
+
+      <!-- Tarjeta 4: Temperatura Superficial -->
+      <div class="card">
+        <h3>Temperatura Superficial</h3>
+        <canvas id="surface-temp-gauge"></canvas>
+      </div>
+
+      <!-- Tarjeta 5: Pluviómetro -->
+      <div class="card">
+        <h3>Pluviómetro</h3>
+        <canvas id="rainfall-chart"></canvas>
+      </div>
+
+      <!-- Tarjeta 6: Anemómetro -->
+      <div class="card">
+        <h3>Anemómetro</h3>
+        <canvas id="wind-direction-chart"></canvas>
+      </div>
+
+      <!-- Tarjeta 7: Ubicación Sensores -->
+      <div class="card">
+        <h3>Ubicación Sensores</h3>
+        <div id="map"></div>
+      </div>
+
+      <!-- Tarjeta 8: Estado Cámara -->
+      <div class="card">
+        <h3>Estado Cámara</h3>
+        <p>Sesiones activas: 3</p>
+        <p>Última actualización: 24/03/2023</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 Agromul Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- Firebase SDK Modular -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js ';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js ';
+
+    // Tu configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDaBAp23kS7HttX7hLXWuDLPI4NlTDPBuU",
+      authDomain: "agromul-web.firebaseapp.com",
+      projectId: "agromul-web",
+      storageBucket: "agromul-web.firebasestorage.app",
+      messagingSenderId: "282023614826",
+      appId: "1:282023614826:web:706c04fdd3f3360bd46d13",
+      measurementId: "G-W4FMN62599"
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Verificar sesión del usuario
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById("user-name").textContent = user.email || "Usuario";
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    // Botón de cerrar sesión
+    document.querySelector(".logout-btn").addEventListener("click", () => {
+      signOut(auth).then(() => {
+        alert("Sesión cerrada");
+        window.location.href = "login.html";
+      }).catch((error) => {
+        alert("Error al cerrar sesión: " + error.message);
+      });
+    });
+  </script>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet @1.9.4/dist/leaflet.js"></script>
+
+  <!-- Script para mapa -->
+  <script>
+    let map;
+
+    function initMap() {
+      if (!document.getElementById('map') || map) return;
+
+      map = L.map('map').setView([40.4637, -3.7492], 13); // Madrid como ejemplo
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+    }
+
+    document.addEventListener("DOMContentLoaded", initMap);
+  </script>
+
+  <!-- Gráficos con Chart.js -->
+  <script>
+    // Gauge: Humedad
+    new Chart(document.getElementById('humidity-gauge'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Baja', 'Alta'],
+        datasets: [{
+          label: 'Humedad',
+          data: [30, 70],
+          backgroundColor: ['#FF6384', '#36A2EB']
+        }]
+      },
+      options: { cutout: '80%' }
+    });
+
+    // Gauge: Conductividad
+    new Chart(document.getElementById('conductivity-gauge'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Baja', 'Alta'],
+        datasets: [{
+          label: 'Conductividad',
+          data: [40, 60],
+          backgroundColor: ['#FF6384', '#36A2EB']
+        }]
+      },
+      options: { cutout: '80%' }
+    });
+
+    // Gauge: Temp. Subsuelo
+    new Chart(document.getElementById('subsoil-temp-gauge'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Fría', 'Caliente'],
+        datasets: [{
+          label: 'Temp. Subsuelo',
+          data: [30, 70],
+          backgroundColor: ['#FF6384', '#36A2EB']
+        }]
+      },
+      options: { cutout: '80%' }
+    });
+
+    // Gauge: Temp. Superficial
+    new Chart(document.getElementById('surface-temp-gauge'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Fría', 'Caliente'],
+        datasets: [{
+          label: 'Temp. Superficial',
+          data: [20, 80],
+          backgroundColor: ['#FF6384', '#36A2EB']
+        }]
+      },
+      options: { cutout: '80%' }
+    });
+
+    // Gráfico Barras: Lluvia acumulada
+    new Chart(document.getElementById('rainfall-chart'), {
+      type: 'bar',
+      data: {
+        labels: ['Ene', 'Feb', 'Mar', 'Abr'],
+        datasets: [{
+          label: 'Lluvia (mm)',
+          data: [239, 254, 102, 292],
+          backgroundColor: ['#36A2EB', '#FF6384', '#36A2EB', '#FF6384']
+        }]
+      },
+      options: {
+        scales: { y: { beginAtZero: true } },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    // Gráfico Línea: Viento
+    new Chart(document.getElementById('wind-direction-chart'), {
+      type: 'line',
+      data: {
+        labels: ['21:00', '23:00', '01:00', '03:00', '05:00', '07:00', '09:00'],
+        datasets: [{
+          label: 'Velocidad del viento (km/h)',
+          data: [12, 19, 3, 5, 2, 3, 10],
+          borderColor: '#36A2EB',
+          fill: false,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } }
+      }
+    });
+  </script>
+</body>
+</html>

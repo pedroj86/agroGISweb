@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AgroGIS - Sistema de Información Geográfica de Parcelas</title>
+  <!-- Fuentes -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <!-- Leaflet Draw -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+  <!-- Estilos específicos de GIS -->
+  <link rel="stylesheet" href="gis.css">
+</head>
+<body>
+<header class="header">
+  <div class="logo">
+    <img src="assets/logo.png" alt="Logo Sensor NPK" width="40">
+    <span>AgroGIS</span>
+  </div>
+  <nav class="nav-links">
+    <ul>
+      <li><a href="dashboard.html">Inicio</a></li>
+      <li><a href="dashboard.html">Datos en Tiempo Real</a></li>
+      <li><a href="#">AgroGIS</a></li>
+      <li><a href="dashboard.html">Configuración</a></li>
+      <li><button class="logout-btn" id="logout-btn">Cerrar Sesión</button></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- Sidebar Izquierdo - Formulario -->
+<button id="left-toggle" class="sidebar-toggle-left">></button>
+<aside class="sidebar-left" id="sidebar-left">
+  <div class="sidebar-heading">Datos de Parcela</div>
+  <div class="form-group">
+    <label for="parcel-name">Nombre:</label>
+    <input type="text" id="parcel-name" placeholder="Nombre de parcela">
+  </div>
+  <div class="form-group">
+    <label for="layer-type">Tipo:</label>
+    <select id="layer-type">
+      <option value="parcela">Parcela</option>
+      <option value="recinto">Recinto</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="parcel-crop">Cultivo:</label>
+    <select id="parcel-crop">
+      <option value="">Seleccione...</option>
+      <option value="olivo">Olivo</option>
+      <option value="almendro">Almendro</option>
+      <option value="viñedo">Viñedo</option>
+      <option value="cereal">Cereal</option>
+      <option value="hortaliza">Hortaliza</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="parcel-area">Superficie (ha):</label>
+    <input type="text" id="parcel-area" readonly>
+  </div>
+  <button class="btn full" id="save-parcel">Guardar</button>
+  <button class="btn full" id="cancel-edit" style="background: #f0f0f0; color: #333;">Cancelar</button>
+</aside>
+
+<!-- Barra de herramientas -->
+<nav class="toolbar-navbar" id="toolbar">
+  <div class="tool-btn" id="draw-polygon"><i class="fas fa-draw-polygon"></i> Dibujar</div>
+  <div class="tool-btn" id="edit-polygon"><i class="fas fa-edit"></i> Editar geometría</div>
+  <div class="tool-btn" id="delete-polygon"><i class="fas fa-trash"></i> Eliminar</div>
+  <div class="tool-btn" id="measure-tool"><i class="fas fa-ruler"></i> Medir Área</div>
+  <div class="tool-btn" id="info-tool"><i class="fas fa-info-circle"></i> Info SIGPAC</div>
+  <button id="save-parcel-btn" class="btn full">Guardar Parcela</button>
+  <button id="delete-parcel-btn" class="btn full" style="background-color: red;">Eliminar Parcela</button>
+  <div id="parcel-list">
+    <h3>Mis Parcelas</h3>
+    <ul id="parcels"></ul>
+  </div>
+  <div id="leaflet-controls"></div>
+</nav>
+
+<div class="container">
+  <div class="map-container">
+    <div id="map"></div>
+    <div class="coordinates" id="coordinates">Lat: 0.000000, Lng: 0.000000</div>
+    <div class="bottom-panel" id="bottom-panel">
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <div class="form-group">
+          <label for="parcel-name">Nombre:</label>
+          <input type="text" id="parcel-name">
+          <label for="layer-type">Tipo de Capa:</label>
+          <select id="layer-type">
+            <option value="parcela">Parcela</option>
+            <option value="recinto">Recinto</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="parcel-crop">Cultivo:</label>
+          <select id="parcel-crop">
+            <option value="">Seleccione...</option>
+            <option value="olivo">Olivo</option>
+            <option value="almendro">Almendro</option>
+            <option value="viñedo">Viñedo</option>
+            <option value="cereal">Cereal</option>
+            <option value="hortaliza">Hortaliza</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="parcel-area">Superficie (ha):</label>
+          <input type="text" id="parcel-area" readonly>
+        </div>
+      </div>
+      <div>
+        <button class="btn" id="save-parcel">Guardar</button>
+        <button class="btn" id="cancel-edit" style="background: #f0f0f0; color: #333;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <button id="right-toggle" aria-label="Abrir barra lateral">&lt;</button>><</button>
+
+  <aside class="sidebar-right" id="sidebar-right">
+    <div class="sidebar-heading">Capas</div>
+    <div class="layer-control">
+      <h4>Capas Base</h4>
+      <div class="layer-item">
+        <input type="radio" name="baseLayer" id="satellite-layer" checked>
+        <label for="satellite-layer">Satélite</label>
+      </div>
+      <div class="layer-item">
+        <input type="radio" name="baseLayer" id="topo-layer">
+        <label for="topo-layer">Topográfico IGN</label>
+      </div>
+      <div class="layer-item">
+        <input type="radio" name="baseLayer" id="osm-layer">
+        <label for="osm-layer">Ortofotos</label>
+      </div>
+
+      <h4 style="margin-top: 1rem;">Capas Vectoriales</h4>
+      <div class="layer-item">
+        <input type="checkbox" id="sigpac-layer" checked>
+        <label for="sigpac-layer">SIGPAC (Recintos)</label>
+      </div>
+      <div class="layer-item">
+        <input type="checkbox" id="parcels-layer" checked>
+        <label for="parcels-layer">Mis Parcelas</label>
+      </div>
+
+      <h4 style="margin-top: 1rem;">Mis Capas</h4>
+      <div class="layer-item">
+        <input type="checkbox" id="my-parcels-layer" checked>
+        <label for="my-parcels-layer">Mostrar Mis Parcelas</label>
+      </div>
+      <div class="layer-item">
+        <input type="checkbox" id="my-recintos-layer" checked>
+        <label for="my-recintos-layer">Mostrar Mis Recintos</label>
+      </div>
+
+      <div class="sidebar-heading">Información</div>
+      <div class="feature-info" id="feature-info">
+        <p>Haz clic en el mapa para obtener información.</p>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+  let map = null, drawnItems, drawControl;
+
+  document.addEventListener("DOMContentLoaded", function () {
+    initMap();
+    initUI();
+
+      });
+
+ 
+function initMap() {
+  // Si ya existe un mapa montado, salimos sin hacer nada
+  if (map !== null) return;
+
+  const satelliteLayer = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { attribution: '&copy; Esri' }
+  );
+  const topoLayer = L.tileLayer(
+    'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    { attribution: '&copy; OpenTopoMap' }
+  );
+  const osmLayer = L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    { attribution: '&copy; OpenStreetMap' }
+  );
+  const sigpacLayer = L.tileLayer.wms(
+    'https://sigpac.mapa.es/fega/visor/consultas/capasWMS/wms',
+    {
+      layers: 'recintos',
+      format: 'image/png',
+      transparent: true,
+      version: '1.3.0',
+      attribution: '&copy; SIGPAC'
+    }
+  );
+
+  // Aquí sí inicializamos el mapa (solo la primera vez)
+  map = L.map('map', {
+    center: [38.040, -1.463],
+    zoom: 13,
+    layers: [satelliteLayer, sigpacLayer]
+  });
+
+  // Capa para dibujo
+  drawnItems = new L.FeatureGroup().addTo(map);
+
+  // Control de dibujo
+  drawControl = new L.Control.Draw({
+    edit: { featureGroup: drawnItems },
+    draw: {
+      polygon: true,
+      rectangle: true,
+      polyline: false,
+      marker: false,
+      circle: false
+    }
+  });
+
+  // Evento al crear
+  map.on(L.Draw.Event.CREATED, e => {
+    drawnItems.addLayer(e.layer);
+    showBottomPanel();
+  });
+
+
+    // Herramientas
+    document.getElementById('draw-polygon').onclick = () => map.addControl(drawControl);
+    document.getElementById('edit-polygon').onclick = () => map.addControl(drawControl);
+    document.getElementById('delete-polygon').onclick = () => map.addControl(drawControl);
+
+   // Coordenadas
+    map.on('mousemove', e => {
+      document.getElementById('coordinates').textContent =
+        `Lat: ${e.latlng.lat.toFixed(6)}, Lng: ${e.latlng.lng.toFixed(6)}`;
+    });
+
+    // Cambiar capas base
+    document.querySelectorAll('input[name="baseLayer"]').forEach(input => {
+      input.addEventListener('change', function () {
+        map.eachLayer(layer => {
+          if (layer instanceof L.TileLayer) map.removeLayer(layer);
+        });
+        if (this.id === 'satellite-layer') map.addLayer(satelliteLayer);
+        if (this.id === 'topo-layer') map.addLayer(topoLayer);
+        if (this.id === 'osm-layer') map.addLayer(osmLayer);
+      });
+    });
+
+    // Mostrar u ocultar SIGPAC
+    document.getElementById('sigpac-layer').addEventListener('change', function () {
+      this.checked ? map.addLayer(sigpacLayer) : map.removeLayer(sigpacLayer);
+    });
+
+    // Consulta SIGPAC
+    map.on('click', fetchSigpacInfo);
+  }
+
+  function fetchSigpacInfo(e) {
+    const url = 'https://sigpac.mapa.es/fega/visor/consultas/capasWMS/wms';
+    const params = {
+      request: 'GetFeatureInfo',
+      service: 'WMS',
+      srs: 'EPSG:4326',
+      styles: '',
+      transparent: true,
+      version: '1.3.0',
+      format: 'image/png',
+      bbox: map.getBounds().toBBoxString(),
+      height: map.getSize().y,
+      width: map.getSize().x,
+      layers: 'recintos',
+      query_layers: 'recintos',
+      info_format: 'application/json',
+      i: Math.floor(map.layerPointToContainerPoint(map.latLngToLayerPoint(e.latlng)).x),
+      j: Math.floor(map.layerPointToContainerPoint(map.latLngToLayerPoint(e.latlng)).y)
+    };
+    fetch(`${url}?${new URLSearchParams(params)}`)
+      .then(res => res.json())
+      .then(data => {
+        const info = document.getElementById('feature-info');
+        if (data.features && data.features.length > 0) {
+          const p = data.features[0].properties;
+          info.innerHTML = `<strong>ID Recinto:</strong> ${p.IDREC}<br><strong>Uso:</strong> ${p.USO}<br><strong>Superficie:</strong> ${p.SUPERFICIE} ha`;
+        } else {
+          info.textContent = "No se encontró información SIGPAC.";
+        }
+      }).catch(() => {
+        document.getElementById('feature-info').textContent = "Error al consultar SIGPAC.";
+      });
+  }
+
+  function showBottomPanel() {
+    document.getElementById('bottom-panel').classList.add('active');
+  }
+
+  function initUI() {
+  const sidebarLeft = document.getElementById('sidebar-left');
+  const sidebarRight = document.getElementById('sidebar-right');
+  const leftToggle = document.getElementById('left-toggle');
+  const rightToggle = document.getElementById('right-toggle');
+  const sidebarW = parseInt(getComputedStyle(document.documentElement)
+                         .getPropertyValue('--sidebar-width'));
+
+  // Inicializar posiciones de los toggles
+  leftToggle.style.left = `${sidebarW}px`;
+  leftToggle.innerText = '>'; // flecha para abrir
+
+  rightToggle.style.right = `${sidebarW}px`;
+  rightToggle.innerText = '<'; // flecha para cerrar
+
+  // Toggle del sidebar izquierdo
+  if (leftToggle && sidebarLeft) {
+    leftToggle.addEventListener('click', () => {
+      const isCollapsed = sidebarLeft.classList.toggle('collapsed');
+
+      // Ajustar posición del botón toggle
+      leftToggle.style.left = isCollapsed ? "0" : `${sidebarW}px`;
+
+      // Cambiar ícono del botón
+      leftToggle.innerText = isCollapsed ? '>' : '<';
+
+      // Opcional: cambiar clase para estilos
+      leftToggle.classList.toggle('collapsed', isCollapsed);
+    });
+  }
+
+  // Toggle del sidebar derecho
+  if (rightToggle && sidebarRight) {
+    rightToggle.addEventListener('click', () => {
+      const isCollapsed = sidebarRight.classList.toggle('collapsed');
+
+      // Ajustar posición del botón toggle
+      rightToggle.style.right = isCollapsed ? "0" : `${sidebarW}px`;
+
+      // Cambiar ícono del botón
+      rightToggle.innerText = isCollapsed ? '<' : '>';
+
+      // Opcional: cambiar clase para estilos
+      rightToggle.classList.toggle('collapsed', isCollapsed);
+    });
+  }
+}
+
+  document.addEventListener("DOMContentLoaded", () => {
+    initMap();
+    initUI();
+    // …el resto de tu código…
+  });
+</script>
+
+<script type="module">
+  import { getAuth, signOut, onAuthStateChanged } from './js/firebase.js';
+  import { loadUserParcels }                          from './js/mapa.js';
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    initMap();
+    initUI();
+
+    const auth = getAuth();
+
+    // 1) Verificar sesión
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+      // 2) Cargar parcelas
+      await loadUserParcels(user.uid);
+    });
+
+    // 3) Botón de cerrar sesión
+    document.getElementById("logout-btn")
+      .addEventListener("click", async () => {
+        try {
+          await signOut(auth);
+          alert("Sesión cerrada");
+          window.location.href = "login.html";
+        } catch (e) {
+          console.error("Error al cerrar sesión:", e);
+          alert("Error al cerrar sesión: " + e.message);
+        }
+      });
+  });
+</script>
+</body>
+</html>

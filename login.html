@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Iniciar Sesión - Sensor NPK</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Iconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css ">
+
+  <!-- Estilos globales -->
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    .auth-form {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: calc(100vh - 45px);;
+    }
+
+    .input-group label {
+      display: block;
+      font-weight: bold;
+      color: var(--dark-text);
+      margin-bottom: 0.5rem;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1rem;
+      background-color: var(--beige-bg); /* Amarillo claro */
+    }
+
+    .error-message {
+      color: red;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn.full {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="logo">
+      <img src="assets/logo.png" alt="Logo Sensor NPK" width="40">
+      <span>Sensor NPK</span>
+    </div>
+    <button class="hamburger" id="hamburger">
+      <i class="fas fa-bars"></i>
+    </button>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="index.html#features">Funcionalidades</a></li>
+      <li><a href="index.html#gallery">Galería</a></li>
+      <li><a href="index.html#benefits">Beneficios</a></li>
+      <li><a href="index.html#contacto">Contacto</a></li>
+      <li><a href="#">Acceso Clientes</a></li>
+    </ul>
+  </nav>
+
+  <!-- Formulario de autenticación -->
+  <section class="auth-form">
+    <div class="container">
+      <form id="loginForm">
+        <h2>Iniciar Sesión</h2>
+
+        <div class="input-group">
+          <label for="email"><i class="fas fa-envelope"></i> Correo Electrónico</label>
+          <input type="email" id="email" placeholder="tu@email.com" required />
+        </div>
+
+        <div class="input-group">
+          <label for="password"><i class="fas fa-lock"></i> Contraseña</label>
+          <input type="password" id="password" placeholder="••••••••" required />
+        </div>
+
+        <button type="submit" class="btn full">Iniciar sesión</button>
+        <p id="error-message" class="error-message hidden"></p>
+
+        <div class="auth-link">
+          ¿No tienes cuenta? <a href="registro.html">Regístrate aquí</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 Agromul Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- Firebase SDK Modular -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js ';
+    import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js ';
+
+    // Tu configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDaBAp23kS7HttX7hLXWuDLPI4NlTDPBuU",
+      authDomain: "agromul-web.firebaseapp.com",
+      projectId: "agromul-web",
+      storageBucket: "agromul-web.firebasestorage.app",
+      messagingSenderId: "282023614826",
+      appId: "1:282023614826:web:706c04fdd3f3360bd46d13"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        window.location.href = "dashboard.html";
+      } catch (error) {
+        const errorMessage = document.getElementById("error-message");
+        errorMessage.textContent = error.message;
+        errorMessage.classList.remove("hidden");
+      }
+    });
+  </script>
+
+</body>
+</html>
